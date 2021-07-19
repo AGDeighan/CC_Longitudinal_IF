@@ -99,7 +99,7 @@ for(COHORT in sort(unique(DATA$Cohort))){
       '_uncleaned_weekly_bw_by_cage.pdf'
     ),
     width = 14,
-    height = 6
+    height = 10
   )
   for(H in sort(unique(COHORT_DATA$HID))){
     PLOT_DATA <- COHORT_DATA %>% 
@@ -196,11 +196,13 @@ for(COHORT in sort(unique(DATA$Cohort))){
   }
   rm(H)
   dev.off()
+  
+  rm(COHORT_DATA)
 }
-
 rm(COHORT)
 
 rm(DATA)
+
 #####
 
 
@@ -1355,7 +1357,7 @@ for(COHORT in sort(unique(DATA$Cohort))){
       '_semicleaned_weekly_bw_by_cage.pdf'
     ),
     width = 14,
-    height = 6
+    height = 10
   )
   for(H in sort(unique(COHORT_DATA$HID))){
     PLOT_DATA <- COHORT_DATA %>% 
@@ -1452,7 +1454,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
   }
   rm(H)
   dev.off()
+  
+  rm(COHORT_DATA)
 }
+
+rm(DATA, COHORT)
 
 #####
 
@@ -1466,13 +1472,15 @@ for(COHORT in sort(unique(DATA$Cohort))){
 # then the middle (second) BW would be removed. This results in the removal of
 # 523 records out of 102,100 total records, or ~0.5%
 
+SPEED_CLEANED_DATA <- REVISED_DATA
+
 MARG <- 0.10
 
 flagged_bws = 1
-FLAGGED_BW_TABLE <- REVISED_DATA %>% 
+FLAGGED_BW_TABLE <- SPEED_CLEANED_DATA %>% 
   filter(BW > 100000)
 while(flagged_bws > 0){
-  REVISED_DATA <- REVISED_DATA %>%
+  SPEED_CLEANED_DATA <- SPEED_CLEANED_DATA %>%
     arrange(MouseID, DateCollect) %>%
     group_by(MouseID) %>% 
     mutate(
@@ -1486,20 +1494,20 @@ while(flagged_bws > 0){
     ungroup() %>% 
     select(-c(Lag, Lead, Lag_Diff, Lead_Diff))
   
-  flagged_bws <- sum(REVISED_DATA$BW_Flag, na.rm = TRUE) 
+  flagged_bws <- sum(SPEED_CLEANED_DATA$BW_Flag, na.rm = TRUE) 
   
   FLAGGED_BW_TABLE <- rbind(
     FLAGGED_BW_TABLE,
-    REVISED_DATA %>% 
+    SPEED_CLEANED_DATA %>% 
       filter(BW_Flag) %>% 
       select(-BW_Flag)
   )
   
-  REVISED_DATA %>% 
+  SPEED_CLEANED_DATA %>% 
     filter(BW_Flag) %>% 
     print()
   
-  REVISED_DATA <- REVISED_DATA %>% 
+  SPEED_CLEANED_DATA <- SPEED_CLEANED_DATA %>% 
     filter(!BW_Flag) %>% 
     select(-BW_Flag)
 }
@@ -1542,7 +1550,7 @@ rm(flagged_bws, MARG)
 
 
 ################################################################################
-# Create BW plots with speedcleaned data #### 
+# Create BW plots with flagged data #### 
 
 DATA <- ANIMAL_DATA %>% 
   select(
@@ -1550,6 +1558,155 @@ DATA <- ANIMAL_DATA %>%
   ) %>% 
   right_join(
     REVISED_DATA %>% 
+      select(
+        OutputRowID, MouseID, DateCollect, BW
+      ),
+    by = 'MouseID'
+  )
+
+FLAGGED_DATA <- DATA %>% 
+  filter(OutputRowID %in% FLAGGED_BW_TABLE$OutputRowID)
+
+rm(FLAGGED_BW_TABLE)
+
+for(COHORT in sort(unique(DATA$Cohort))){
+  COHORT_DATA <- DATA %>% 
+    filter(
+      Cohort == COHORT
+    )
+  
+  pdf(
+    paste0(
+      'figures/flagged_bw_plots/',
+      COHORT, 
+      '_flagged_weekly_bw_by_cage.pdf'
+    ),
+    width = 14,
+    height = 10
+  )
+  for(H in sort(unique(COHORT_DATA$HID))){
+    PLOT_DATA <- COHORT_DATA %>% 
+      filter(
+        HID == H
+      )
+    
+    PLOT <- PLOT_DATA %>% 
+      ggplot() +
+      theme_minimal(
+        base_size = 9
+      ) +
+      geom_line(
+        aes(x = DateCollect, y = BW, color = MouseID, group = MouseID),
+        alpha = 0.8
+      ) +
+      geom_point(
+        aes(x = DateCollect, y = BW, color = MouseID),
+        alpha = 0.5
+      ) +
+      geom_point(
+        data = PLOT_DATA %>% 
+          group_by(
+            MouseID, DOB
+          ) %>% 
+          summarise(
+            BW = 0
+          ),
+        aes(x = DOB, y = BW, color = MouseID),
+        alpha = 0.5,
+        shape = 15
+      ) +
+      geom_text(
+        data = PLOT_DATA %>% 
+          arrange(
+            MouseID, DateCollect
+          ) %>% 
+          group_by(
+            MouseID, DOE, COE
+          ) %>% 
+          summarise(
+            BW = BW[n()]
+          ),
+        aes(x = DOE, y = BW, color = MouseID, label = COE),
+        alpha = 1,
+        size = 9 * 5/14,
+        hjust = 0
+      ) +
+      geom_point(
+        data = FLAGGED_DATA %>% 
+          filter(HID == H),
+        aes(x = DateCollect, y = BW),
+        shape = 20,
+        alpha = 1, 
+        color = 'black'
+      ) +
+      scale_x_date(
+        date_breaks = 'months',
+        date_minor_breaks = 'weeks',
+        date_labels = '%y %b',
+        limits = c(
+          min(PLOT_DATA$DOB) - weeks(1),
+          max(PLOT_DATA$DOE) + months(2)
+        ),
+        exp = c(0,0)
+      ) +
+      scale_y_continuous(
+        breaks = seq(0, 100, 12),
+        minor_breaks = seq(0, 100, 3),
+        limits = c(0, 70),
+        exp = c(0,0)
+      ) +
+      scale_color_manual(
+        values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33')
+      ) +
+      theme(
+        legend.position = 'top',
+        axis.text.x = element_text(
+          angle = 45, 
+          vjust = 1, 
+          hjust = 1
+        )
+      ) +
+      labs(
+        title = paste0('Flagged weekly bodyweights for pen ', H),
+        subtitle = paste0(
+          unique(PLOT_DATA$Diet), ', ',
+          COHORT, ', ', 
+          unique(PLOT_DATA$Strain), ', ',
+          unique(PLOT_DATA$Sex), ', ',
+          unique(PLOT_DATA$BWDay), ' bodyweights'
+        ),
+        x = 'Collection date',
+        y = 'Weight (grams)',
+        color = 'Mouse',
+        caption = 'Flagged bodyweights are shown by black dots. The small rectangle at lower left indicates the birthdate for each mouse'
+      )
+    
+    plot(PLOT)
+    
+    rm(PLOT_DATA, PLOT)
+  }
+  rm(H)
+  dev.off()
+  
+  rm(COHORT_DATA)
+}
+
+rm(COHORT)
+
+rm(DATA, FLAGGED_DATA)
+
+#####
+
+
+################################################################################
+# Create BW plots with speedcleaned data #### 
+
+DATA <- ANIMAL_DATA %>% 
+  select(
+    MouseID, Diet, Strain, Sex, Cohort, BWDay, HID, DOB, DOE, COE,
+  ) %>% 
+  right_join(
+    SPEED_CLEANED_DATA %>% 
       select(
         MouseID, DateCollect, BW
       ),
@@ -1569,7 +1726,7 @@ for(COHORT in sort(unique(DATA$Cohort))){
       '_speedcleaned_weekly_bw_by_cage.pdf'
     ),
     width = 14,
-    height = 6
+    height = 10
   )
   for(H in sort(unique(COHORT_DATA$HID))){
     PLOT_DATA <- COHORT_DATA %>% 
@@ -1666,7 +1823,12 @@ for(COHORT in sort(unique(DATA$Cohort))){
   }
   rm(H)
   dev.off()
+  
+  rm(COHORT_DATA)
 }
+rm(COHORT)
+
+rm(DATA)
 
 #####
 
@@ -1674,7 +1836,7 @@ for(COHORT in sort(unique(DATA$Cohort))){
 ################################################################################
 # Save data ####
 
-REVISED_DATA %>% 
+SPEED_CLEANED_DATA %>% 
   write_csv('data/SpeedCleaned_BW_20210719.csv')
 # # A tibble: 66,909 x 9
 #    OutputRowID MouseID     BWDay_Test Tech  BatchComments DateDue    DateCollect DateComplete    BW
