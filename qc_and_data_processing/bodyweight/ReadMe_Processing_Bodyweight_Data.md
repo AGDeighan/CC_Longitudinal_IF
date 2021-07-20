@@ -38,7 +38,7 @@ The data cleaning was carried out in the following order and records with errors
 <br>
 <br>
 
-### 3) Missing bodyweight only; 19 removed
+### 3) Missing bodyweight only: 19 removed
 
 19 records that were missing their bodyweight but had a mouse ID were removed, they are saved in the CSV file: issues/records_missing_bw_not_mouseid.csv
 
