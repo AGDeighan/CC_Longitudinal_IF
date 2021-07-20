@@ -2084,7 +2084,7 @@ for(COHORT in sort(unique(DATA$Cohort))){
         y = 'Weight (grams)',
         color = 'Mouse',
         caption = paste0(
-          'The curve and the small triangles indicate the LOESS-fitted BWs, the larger circles indicated the measured BWs.',
+          'The curve and the small diamonds indicate the LOESS-fitted BWs, the larger circles indicated the measured BWs.',
           ' The dotted vertical line indicates the start of the diet-intervention (6 months of age).'
         )
       )
