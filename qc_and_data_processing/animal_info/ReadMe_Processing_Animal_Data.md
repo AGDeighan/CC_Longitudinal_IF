@@ -1,4 +1,4 @@
-# Overview
+# Processing of animal data
 
 The processed animal data (animal_data_processed) was created from data output from the bulk animal export facet (AnimalBulkExport) of Climb, our laboratory information management system, and data output from the animal facet (animals). During data processing, most were changes of column names and reformatting of the names of mice, strains, diets, cohorts, etc. The only notable change was the designation of housing IDs (which indicate the pen each mouse was assigned to). Mice were housed in pems of up to four mice per pen, though some pens contained fewer than four. Four mice had the wrong housing IDs in the "animals" data, but we were able to find their correct housing ID. For full details on the processing of the animal data, please refer to the R-script "process_animal_data_20210719.R", it is heavily commented so it should be relatively read-able.
 
