@@ -21,6 +21,11 @@ tab <- function(...,
   return(x)
 }
 
+loess_smooth <- function(bw, age, ...){
+  MODEL <- loess(bw ~ age, ...)
+  return(MODEL$fitted)
+}
+
 #####
 
 
@@ -112,6 +117,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
       theme_minimal(
         base_size = 9
       ) +
+      geom_vline(
+        xintercept = mean(PLOT_DATA$DOB) + days(round(6*30.4)),
+        linetype = 3,
+        color = 'gray50'
+      ) +
       geom_line(
         aes(x = DateCollect, y = BW, color = MouseID, group = MouseID),
         alpha = 0.8
@@ -159,10 +169,22 @@ for(COHORT in sort(unique(DATA$Cohort))){
         exp = c(0,0)
       ) +
       scale_y_continuous(
-        breaks = seq(0, 100, 12),
-        minor_breaks = seq(0, 100, 3),
-        limits = c(0, 70),
+        breaks = seq(0, 1000, 12),
+        minor_breaks = seq(0, 1000, 3),
+        limits = c(
+          0, 
+          max(c(70, PLOT_DATA$BW + 10), na.rm = TRUE)
+        ),
         exp = c(0,0)
+      ) +
+      coord_cartesian(
+        ylim = c(
+          0,
+          max(c(
+            70, 
+            min(c(120, max(PLOT_DATA$BW, na.rm = TRUE)))
+          ))
+        )
       ) +
       scale_color_manual(
         values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33')
@@ -187,7 +209,10 @@ for(COHORT in sort(unique(DATA$Cohort))){
         x = 'Collection date',
         y = 'Weight (grams)',
         color = 'Mouse',
-        caption = 'The small rectangle at lower left indicates the birthdate for each mouse'
+        caption = paste0(
+          'The small rectangle at lower left indicates the birthdate for each mouse.',
+          ' The dotted vertical line indicates the start of the diet intervention (6 months of age).'
+        )
       )
     
     plot(PLOT)
@@ -1223,9 +1248,9 @@ REVISED_DATA$BW %>% summary()
   data.frame()
 #   OutputRowID      MouseID BWDay_Test  Tech BatchComments    DateDue DateCollect DateComplete   BW
 # 1       11626 IL16557-5454    Tuesday Gaven          <NA> 2018-02-06  2018-02-07         <NA> 3.21    * Typo, multiply by 10
-# 2      475524 IL16513-5312   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, multiply by 10
-# 3      475525 IL16513-5313   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, multiply by 10
-# 4      475526 IL16513-5314   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, multiply by 10
+# 2      475524 IL16513-5312   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, but not sure what the correct value should be, all three records with BW 2.00 are from the same timepoint and the same cage
+# 3      475525 IL16513-5313   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, but not sure what the correct value should be, all three records with BW 2.00 are from the same timepoint and the same cage
+# 4      475526 IL16513-5314   Thursday  <NA>          <NA> 2017-12-07  2018-02-14         <NA> 2.00    * Typo, but not sure what the correct value should be, all three records with BW 2.00 are from the same timepoint and the same cage
 # 5     1355414 IL16211-5137     Friday  <NA>          <NA> 2017-09-15  2017-09-15         <NA> 0.37    * Typo, but not sure what the correct value should be
 
 LOW_BW %>% 
@@ -1313,9 +1338,9 @@ REVISED_DATA %>%
 
 
 REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[1]] <- 32.10
-REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[2]] <- 20.00
-REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[3]] <- 20.00
-REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[4]] <- 20.00
+REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[2]] <- as.numeric(NA)
+REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[3]] <- as.numeric(NA)
+REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[4]] <- as.numeric(NA)
 REVISED_DATA$BW[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[5]] <- as.numeric(NA)
 
 
@@ -1325,6 +1350,9 @@ hist(
 )
 
 rm(LOW_BW, I)
+
+REVISED_DATA <- REVISED_DATA %>% 
+  filter(!is.na(BW))
 
 #####
 
@@ -1369,6 +1397,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
       ggplot() +
       theme_minimal(
         base_size = 9
+      ) +
+      geom_vline(
+        xintercept = mean(PLOT_DATA$DOB) + days(round(6*30.4)),
+        linetype = 3,
+        color = 'gray50'
       ) +
       geom_line(
         aes(x = DateCollect, y = BW, color = MouseID, group = MouseID),
@@ -1445,7 +1478,10 @@ for(COHORT in sort(unique(DATA$Cohort))){
         x = 'Collection date',
         y = 'Weight (grams)',
         color = 'Mouse',
-        caption = 'The small rectangle at lower left indicates the birthdate for each mouse'
+        caption = paste0(
+          'The small rectangle at lower left indicates the birthdate for each mouse.',
+          ' The dotted vertical line indicates the start of the diet intervention (6 months of age).'
+        )
       )
     
     plot(PLOT)
@@ -1511,7 +1547,7 @@ while(flagged_bws > 0){
     filter(!BW_Flag) %>% 
     select(-BW_Flag)
 }
-# # # A tibble: 1,470 x 10
+# # # A tibble: 1,471 x 10
 # #    OutputRowID MouseID     BWDay_Test Tech   BatchComments DateDue    DateCollect DateComplete    BW BW_Flag
 # #          <int> <chr>       <chr>      <chr>  <chr>         <date>     <date>      <date>       <dbl> <lgl>  
 # #  1     1342728 AU8002-5500 Thursday   NA     NA            2017-02-16 2017-02-16  NA            29.4 TRUE   
@@ -1594,6 +1630,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
       ggplot() +
       theme_minimal(
         base_size = 9
+      ) +
+      geom_vline(
+        xintercept = mean(PLOT_DATA$DOB) + days(round(6*30.4)),
+        linetype = 3,
+        color = 'gray50'
       ) +
       geom_line(
         aes(x = DateCollect, y = BW, color = MouseID, group = MouseID),
@@ -1678,7 +1719,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
         x = 'Collection date',
         y = 'Weight (grams)',
         color = 'Mouse',
-        caption = 'Flagged bodyweights are shown by black dots. The small rectangle at lower left indicates the birthdate for each mouse'
+        caption = paste0(
+          'Flagged bodyweights are shown by black dots.',
+          ' The small rectangle at lower left indicates the birthdate for each mouse.',
+          ' The dotted vertical line indicates the start of the diet intervention (6 months of age).'
+        )
       )
     
     plot(PLOT)
@@ -1699,7 +1744,7 @@ rm(DATA, FLAGGED_DATA)
 
 
 ################################################################################
-# Create BW plots with speedcleaned data #### 
+# Create BW plots with speed-cleaned data #### 
 
 DATA <- ANIMAL_DATA %>% 
   select(
@@ -1738,6 +1783,11 @@ for(COHORT in sort(unique(DATA$Cohort))){
       ggplot() +
       theme_minimal(
         base_size = 9
+      ) +
+      geom_vline(
+        xintercept = mean(PLOT_DATA$DOB) + days(round(6*30.4)),
+        linetype = 3,
+        color = 'gray50'
       ) +
       geom_line(
         aes(x = DateCollect, y = BW, color = MouseID, group = MouseID),
@@ -1814,7 +1864,229 @@ for(COHORT in sort(unique(DATA$Cohort))){
         x = 'Collection date',
         y = 'Weight (grams)',
         color = 'Mouse',
-        caption = 'The small rectangle at lower left indicates the birthdate for each mouse'
+        caption = paste0(
+          'The small rectangle at lower left indicates the birthdate for each mouse.',
+          ' The dotted vertical line indicates the start of the diet intervention (6 months of age).'
+        )
+      )
+    
+    plot(PLOT)
+    
+    rm(PLOT_DATA, PLOT)
+  }
+  rm(H)
+  dev.off()
+  
+  rm(COHORT_DATA)
+}
+rm(COHORT)
+
+rm(DATA)
+
+#####
+
+
+################################################################################
+# Get LOESS fit BWs for speed-cleaned data ####
+
+# Use animal data to get age
+SPEED_CLEANED_DATA <- ANIMAL_DATA %>% 
+  select(MouseID, DOB) %>% 
+  right_join(
+    SPEED_CLEANED_DATA,
+    by = 'MouseID'
+  ) %>% 
+  mutate(
+    AgeInDays = as.numeric(difftime(DateCollect, DOB, units = 'days'))
+  ) %>% 
+  select(MouseID:DateComplete, AgeInDays, BW) %>% 
+  select(-DOB)
+
+# For mice that have less than 5 recorded bodyweights (BWs) we will not estimate LOESS
+# fitted BWs. For mice that died before the start of the diet intervention (6 
+# months), we will use a span of 1 (use all data to estimate each fitted value 
+# of BW, see the documentation of R/stats::loess); trying to use a smaller span 
+# results in too little data to fit the curve. For mice that died after the
+# start of the intervention we will use a span of 1/3 (onlt the third of all
+# data nearest to the value being fitted is used for estimation)
+
+SPEED_CLEANED_DATA <- SPEED_CLEANED_DATA %>%
+  group_by(MouseID) %>%
+  mutate(
+    N = n(),
+    DiedYoung = max(AgeInDays, na.rm = TRUE) < 6*30.4
+  ) %>%
+  ungroup()
+
+SPEED_CLEANED_DATA <- rbind(
+  SPEED_CLEANED_DATA %>%
+    filter(N < 5) %>% 
+    arrange(MouseID, DateCollect) %>% 
+    group_by(MouseID) %>%
+    mutate(
+      BW_LOESS = NA
+    ) %>%
+    ungroup() %>% 
+    select(-N, -DiedYoung),
+  SPEED_CLEANED_DATA %>%
+    filter(N >= 5, DiedYoung) %>% 
+    arrange(MouseID, DateCollect) %>% 
+    group_by(MouseID) %>%
+    mutate(
+      BW_LOESS = loess_smooth(BW, AgeInDays, span = 1, degree = 2)
+    ) %>%
+    ungroup() %>% 
+    select(-N, -DiedYoung),
+  SPEED_CLEANED_DATA %>%
+    filter(N >= 5, !DiedYoung) %>% 
+    arrange(MouseID, DateCollect) %>% 
+    group_by(MouseID) %>%
+    mutate(
+      BW_LOESS = loess_smooth(BW, AgeInDays, span = 1/3, degree = 2)
+    ) %>%
+    ungroup() %>% 
+    select(-N, -DiedYoung)
+) %>% 
+  arrange(
+    substr(MouseID, nchar(MouseID) - 3, 999),
+    DateCollect
+  )
+
+#####
+
+
+################################################################################
+# Create BW plots with speed-cleaned data with LOESS fits #### 
+
+DATA <- ANIMAL_DATA %>% 
+  select(
+    MouseID, Diet, Strain, Sex, Cohort, BWDay, HID, DOB, DOE, COE,
+  ) %>% 
+  right_join(
+    SPEED_CLEANED_DATA %>% 
+      select(
+        MouseID, DateCollect, BW, BW_LOESS
+      ),
+    by = 'MouseID'
+  )
+
+for(COHORT in sort(unique(DATA$Cohort))){
+  COHORT_DATA <- DATA %>% 
+    filter(
+      Cohort == COHORT
+    )
+  
+  pdf(
+    paste0(
+      'figures/speedcleaned_bw_plots/with_loess_fitted_bw/',
+      COHORT, 
+      '_speedcleaned_weekly_bw_with_loess_bw_by_cage.pdf'
+    ),
+    width = 14,
+    height = 10
+  )
+  for(H in sort(unique(COHORT_DATA$HID))){
+    PLOT_DATA <- COHORT_DATA %>% 
+      filter(
+        HID == H
+      )
+    
+    
+    PLOT <- PLOT_DATA %>% 
+      ggplot() +
+      theme_minimal(
+        base_size = 9
+      ) +
+      geom_vline(
+        xintercept = mean(PLOT_DATA$DOB) + days(round(6*30.4)),
+        linetype = 3,
+        color = 'gray50'
+      ) +
+      geom_line(
+        aes(x = DateCollect, y = BW_LOESS, color = MouseID, group = MouseID),
+        alpha = 0.8
+      ) +
+      geom_point(
+        aes(x = DateCollect, y = BW_LOESS, color = MouseID),
+        alpha = 0.8,
+        shape = 18,
+        size = 1
+      ) +
+      geom_point(
+        aes(x = DateCollect, y = BW, color = MouseID),
+        alpha = 0.5
+      ) +
+      geom_point(
+        data = PLOT_DATA %>% 
+          group_by(
+            MouseID, DOB
+          ) %>% 
+          summarise(
+            BW = 0
+          ),
+        aes(x = DOB, y = BW, color = MouseID),
+        alpha = 0.5,
+        shape = 15
+      ) +
+      geom_text(
+        data = PLOT_DATA %>% 
+          arrange(
+            MouseID, DateCollect
+          ) %>% 
+          group_by(
+            MouseID, DOE, COE
+          ) %>% 
+          summarise(
+            BW = BW[n()]
+          ),
+        aes(x = DOE, y = BW, color = MouseID, label = COE),
+        alpha = 1,
+        size = 9 * 5/14,
+        hjust = 0
+      ) +
+      scale_x_date(
+        date_breaks = 'months',
+        date_minor_breaks = 'weeks',
+        date_labels = '%y %b',
+        limits = c(
+          min(PLOT_DATA$DOB) - weeks(1),
+          max(PLOT_DATA$DOE) + months(2)
+        ),
+        exp = c(0,0)
+      ) +
+      scale_y_continuous(
+        breaks = seq(0, 100, 12),
+        minor_breaks = seq(0, 100, 3),
+        limits = c(0, 70),
+        exp = c(0,0)
+      ) +
+      scale_color_manual(
+        values = c('#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33')
+      ) +
+      theme(
+        legend.position = 'top',
+        axis.text.x = element_text(
+          angle = 45, 
+          vjust = 1, 
+          hjust = 1
+        )
+      ) +
+      labs(
+        title = paste0('Cleaned (removed flagged bodyweights) weekly bodyweights and LOESS-fitted values for pen ', H),
+        subtitle = paste0(
+          unique(PLOT_DATA$Diet), ', ',
+          COHORT, ', ', 
+          unique(PLOT_DATA$Strain), ', ',
+          unique(PLOT_DATA$Sex), ', ',
+          unique(PLOT_DATA$BWDay), ' bodyweights'
+        ),
+        x = 'Collection date',
+        y = 'Weight (grams)',
+        color = 'Mouse',
+        caption = paste0(
+          'The curve and the small triangles indicate the LOESS-fitted BWs, the larger circles indicated the measured BWs.',
+          ' The dotted vertical line indicates the start of the diet-intervention (6 months of age).'
+        )
       )
     
     plot(PLOT)
@@ -1838,20 +2110,20 @@ rm(DATA)
 
 SPEED_CLEANED_DATA %>% 
   write_csv('data/SpeedCleaned_BW_20210719.csv')
-# # A tibble: 66,909 x 9
-#    OutputRowID MouseID     BWDay_Test Tech  BatchComments DateDue    DateCollect DateComplete    BW
-#          <int> <chr>       <chr>      <chr> <chr>         <date>     <date>      <date>       <dbl>
-#  1     1342696 AU8002-5500 Thursday   NA    NA            2016-07-07 2016-07-07  NA            16.0
-#  2     1342697 AU8002-5500 Thursday   NA    NA            2016-07-14 2016-07-14  NA            16.9
-#  3     1342698 AU8002-5500 Thursday   NA    NA            2016-07-21 2016-07-21  NA            17.4
-#  4     1342699 AU8002-5500 Thursday   NA    NA            2016-07-28 2016-07-28  NA            18.9
-#  5     1342700 AU8002-5500 Thursday   NA    NA            2016-08-04 2016-08-04  NA            19.4
-#  6     1342701 AU8002-5500 Thursday   NA    NA            2016-08-11 2016-08-11  NA            20.9
-#  7     1342702 AU8002-5500 Thursday   NA    NA            2016-08-18 2016-08-18  NA            20.2
-#  8     1342703 AU8002-5500 Thursday   NA    NA            2016-08-25 2016-08-25  NA            21.1
-#  9     1342704 AU8002-5500 Thursday   NA    NA            2016-09-01 2016-09-01  NA            22.5
-# 10     1342705 AU8002-5500 Thursday   NA    NA            2016-09-08 2016-09-08  NA            22.8
-# # … with 66,899 more rows
+# # A tibble: 66,904 x 11
+#    MouseID      OutputRowID BWDay_Test Tech  BatchComments DateDue    DateCollect DateComplete AgeInDays    BW BW_LOESS
+#    <chr>              <int> <chr>      <chr> <chr>         <date>     <date>      <date>           <dbl> <dbl>    <dbl>
+#  1 IL16188-5000     1349288 Thursday   NA    NA            2016-06-02 2016-06-02  NA                  39  21.3     20.8
+#  2 IL16188-5000     1349289 Thursday   NA    NA            2016-06-09 2016-06-09  NA                  46  21.4     21.7
+#  3 IL16188-5000     1349290 Thursday   NA    NA            2016-06-16 2016-06-16  NA                  53  22.2     22.6
+#  4 IL16188-5000     1349291 Thursday   NA    NA            2016-06-23 2016-06-23  NA                  60  22.4     23.5
+#  5 IL16188-5000     1349292 Thursday   NA    NA            2016-06-30 2016-06-30  NA                  67  24.1     24.3
+#  6 IL16188-5000     1349293 Thursday   NA    NA            2016-07-07 2016-07-07  NA                  74  24.6     25.1
+#  7 IL16188-5000     1349294 Thursday   NA    NA            2016-07-14 2016-07-14  NA                  81  26.8     25.9
+#  8 IL16188-5000     1349295 Thursday   NA    NA            2016-07-21 2016-07-21  NA                  88  28.2     26.7
+#  9 IL16188-5000     1349296 Thursday   NA    NA            2016-07-28 2016-07-28  NA                  95  28.9     27.5
+# 10 IL16188-5000     1349297 Thursday   NA    NA            2016-08-04 2016-08-04  NA                 102  27.8     28.2
+# # … with 66,894 more rows
 
 #####
 
