@@ -137,6 +137,49 @@ ANIMAL <- ANIMAL %>%
 
 
 ################################################################################
+# Fix ear notch column #### 
+
+ANIMAL_BULK$EarNotch %>% toupper() %>% tab()
+#  2L 2L1R   2R 2R1L    B    L    N    R <NA> 
+#   5    3   15    6  181  190  200  197    3 
+
+ANIMAL_BULK %>% filter(is.na(EarNotch)) %>% data.frame()
+#        MouseID EarNotch  Sex Status Generation                                    AnimalComments        DOB        DOE             COE FHID LHID Coat
+# 1 IL16188-5056     <NA> Male   Dead        F07                                              <NA> 05/04/2017 09/18/2018 Found Dead (FD) 5974 5974 <NA>
+# 2  OR3609-5978     <NA> Male   Dead        F06 found dead during wheel running testing 9/22/19\n 11/08/2017 09/22/2019 Found Dead (FD) 6598 6598 <NA>
+# 3  OR3609-5979     <NA> Male   Dead        F06                                               REN 11/08/2017 03/11/2019 Found Dead (FD) 6598 6598 <NA>
+
+ANIMAL_BULK <- ANIMAL_BULK %>% 
+  mutate(
+    EarNotch = toupper(EarNotch),
+    EarNotch = ifelse(
+      MouseID == 'OR3609-5979', 'R', EarNotch
+    )
+  )
+
+ANIMAL_BULK$EarNotch %>% tab()
+# 2L 2L1R   2R 2R1L    B    L    N    R <NA> 
+#  5    3   15    6  181  190  200  198    2 
+
+#####
+
+
+################################################################################
+# Format coat color column #### 
+
+ANIMAL_BULK$Coat %>% tolower() %>% tab()
+# black other  <NA> 
+#    43   287   470 
+
+ANIMAL_BULK <- ANIMAL_BULK %>% 
+  mutate(
+    Coat = tolower(Coat)
+  )
+
+#####
+
+
+################################################################################
 # Get housing ID data from the bulk export  ####
 
 ANIMAL <- ANIMAL %>% 
@@ -337,10 +380,6 @@ FULL_ANIMAL_DATA <- ANIMAL %>%
   )
 
 #####
-
-FULL_ANIMAL_DATA
-
-
 
 
 ################################################################################
@@ -549,7 +588,6 @@ FULL_ANIMAL_DATA %>%
 dev.off()
 
 #####
-
 
 
 ################################################################################
