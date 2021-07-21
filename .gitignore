@@ -52,3 +52,9 @@ vignettes/*.pdf
 *test/
 *test.*
 
+# ignore PDF versions of read-me files
+ReadMe*pdf
+readme*pdf
+README*pdf
+Readme*pdf
+
