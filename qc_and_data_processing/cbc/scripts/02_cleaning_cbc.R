@@ -8,6 +8,13 @@ options(stringsAsFactors = FALSE)
 options(max.print = 5000)
 library(lubridate)
 library(tidyverse)
+library(e1071)
+COLORS <- c(
+  'darkolivegreen', 'dodgerblue', 'darkorchid4', 'firebrick', 'orange', 
+  'darkolivegreen3', 'lightskyblue', 'orchid4', 'tomato2', 'darkgoldenrod',
+  'seagreen', 'darksalmon', 
+  'mediumaquamarine', 'navyblue'
+)
 
 #####
 
@@ -92,6 +99,36 @@ get_bw <- function(mouseid, date, bw_data = BW_DATA){
     }
   }
   
+}
+
+logit_of_perc <- function(x, shift = 0.01, inverse = FALSE){
+  if(inverse){
+    # returns inverse log-odds of x
+    ILT <- exp(x)/(1+exp(x))
+    PERC <- ILT * 100
+    UNSHIFT <- PERC - shift
+    return(UNSHIFT)
+  } else{
+    # returns log-odds of x
+    SHIFTED <- x + shift
+    PROP <- SHIFTED/100
+    LT <- log(PROP/(1-PROP))
+    return(LT)
+  }
+}
+
+log_tf <- function(x, shift = 0.01, inverse = FALSE){
+  if(inverse){
+    # returns inverse log-odds of x
+    ILT <- exp(x)
+    UNSHIFT <- ILT - shift
+    return(UNSHIFT)
+  } else{
+    # returns log-odds of x
+    SHIFTED <- x + shift
+    LT <- log(SHIFTED)
+    return(LT)
+  }
 }
 
 #####
@@ -593,6 +630,117 @@ REVISED_DATA %>%
 
 
 ################################################################################
+# Impossibly high test bodyweights ####
+
+# There is one impossibly high test bodyweight. This is the result of a typo
+# in the original files:
+#   - ShockCenter/Current Files/Projects - Ongoing/Collaborative Cross Mice/CC Project 3_Shock Grant/Bleeds/Blood 3/49 weeks/20170327-CC-W1G1-Day 1.xlsx
+#   - ShockCenter/Current Files/Projects - Ongoing/Collaborative Cross Mice/CC Project 3_Shock Grant/Bleeds/Blood 3/CSV Data/49 weeks/Upload_20170327_CC_W1G1_Day1.csv
+# I don't think it is necessary to fix, recompile, and then reimport the 
+# original files to Climb. If it is easy to fix it within Climb than that may
+# be worth doing, but not if it risks messing something else up
+
+REVISED_DATA$BW_Test %>% summary()
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 2.51   25.40   29.15   33.59   33.60 3658.00 
+
+REVISED_DATA %>% 
+  filter(BW_Test < 200) %>% 
+  select(BW_Test) %>% 
+  unlist() %>% 
+  hist(
+    breaks = 300
+  )
+
+REVISED_DATA %>% 
+  filter(BW_Test < 200) %>% 
+  select(BW_Test) %>% 
+  summary()
+#    BW_Test       
+# Min.   : 2.51  
+# 1st Qu.:25.39  
+# Median :29.14  
+# Mean   :30.21  
+# 3rd Qu.:33.59  
+# Max.   :53.75 
+
+(
+  HIGH_BW <- REVISED_DATA %>% 
+    filter(
+      BW_Test > 100
+    )
+) %>% 
+  select(MouseID:BW_Test)
+# # A tibble: 1 x 8
+#   MouseID      DateCollect Tech  Comments                                      HID_Test Coat_Test EN_Test BW_Test
+#   <chr>        <date>      <chr> <chr>                                            <int> <chr>     <chr>     <dbl>
+# 1 IL16557-5406 2017-03-27  Daria Batch comments: none |  Sample comments: none     3613 other     2R1L       3658
+
+HIGH_BW %>% 
+  write_csv(
+    'issues/impossibly_high_test_bw.csv'
+  )
+
+REVISED_DATA$BW_Test[REVISED_DATA$OutputRowID == HIGH_BW$OutputRowID[1]] <- 36.58
+
+hist(
+  REVISED_DATA$BW_Test,
+  breaks = 300
+)
+
+rm(HIGH_BW)
+
+#####
+
+
+################################################################################
+# Impossibly low test bodyweights ####
+
+# There is one impossibly low test bodyweight. This is the result of a typo
+# in the original files:
+#   - ShockCenter/Current Files/Projects - Ongoing/Collaborative Cross Mice/CC Project 3_Shock Grant/Bleeds/Blood 3/49 weeks/20180905-CC-W5G1-Day 2.xlsx
+#   - ShockCenter/Current Files/Projects - Ongoing/Collaborative Cross Mice/CC Project 3_Shock Grant/Bleeds/Blood 3/CSV Data/49 weeks/Upload_20180905_CC_W5G1_Day2.csv
+# However, it is not clear what the true value should be, we will replace this
+# test BW with an NA
+
+REVISED_DATA$BW_Test %>% summary()
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 2.51   25.40   29.15   30.21   33.60   53.75 
+
+(
+  LOW_BW <- REVISED_DATA %>% 
+    filter(
+      BW_Test < 5
+    )
+) %>% 
+  select(MouseID:BW_Test)
+# # A tibble: 1 x 8
+#   MouseID      DateCollect Tech   Comments                                      HID_Test Coat_Test EN_Test BW_Test
+#   <chr>        <date>      <chr>  <chr>                                            <int> <chr>     <chr>     <dbl>
+# 1 IL16188-5064 2018-09-05  Rachel Batch comments: none |  Sample comments: none     6409 other     N          2.51
+
+LOW_BW %>% 
+  write_csv(
+    'issues/impossibly_low_test_bw.csv'
+  )
+
+
+
+
+REVISED_DATA$BW_Test[REVISED_DATA$OutputRowID == LOW_BW$OutputRowID[1]] <- as.numeric(NA)
+
+
+hist(
+  REVISED_DATA$BW_Test,
+  breaks = 300
+)
+
+rm(LOW_BW)
+
+#####
+
+
+################################################################################
 # Create a timepoint column ####
 
 REVISED_DATA <- REVISED_DATA %>% 
@@ -643,6 +791,217 @@ REVISED_DATA %>%
 
 
 ################################################################################
+# Verify collection data ####
+
+# This is somewhat redundant to the previous step where we inspected differences
+# between due, completion, and colecction dates, but is still needs to be done
+# because we need to verify that ALL the collection dates are accurate to the
+# day. We do this by comparing the collection dates in the data downloaded from
+# Climb to the collection dates shown in the filenames of the CSV files in the
+# JAC shared folder: 
+#   ShockCenter/Current Files/Projects - Ongoing/Collaborative Cross Mice/CC Project 3_Shock Grant/Bleeds/Blood 3/CSV Data/
+# There are two batches that need to be shifted a day earlier
+#   - W3G2 Day 1, Year 1, 2018-01-16, 35 mice: off by +1 day (should be 2018-01-15)
+#   - W3G2 Day 2, Year 1, 2018-01-17, 40 mice: off by +1 day (should be 2018-01-16)
+# We will need to recalculate the age in days after making the fix, and should
+# also recalculate the timepoints (though they shouldn't change) because they
+# a derived from the age in days
+
+
+REVISED_DATA %>% 
+  select(
+    MouseID, Timepoint, DateCollect
+  ) %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(MouseID, JobGroup)
+  ) %>% 
+  group_by(
+    JobGroup, Timepoint, DateCollect
+  ) %>% 
+  summarise(
+    N = n()
+  ) %>% 
+  ungroup() %>% 
+  arrange(Timepoint, JobGroup, DateCollect) %>% 
+  data.frame()
+#      JobGroup Timepoint DateCollect  N
+# 1  W1G1 Day 1    Year 1  2017-03-27 34  # Matches CSV filename in JAC shared folder
+# 2  W1G1 Day 2    Year 1  2017-03-28 36  # Matches CSV filename in JAC shared folder
+# 3  W1G2 Day 1    Year 1  2017-04-24 33  # Matches CSV filename in JAC shared folder
+# 4  W1G2 Day 2    Year 1  2017-04-25 37  # Matches CSV filename in JAC shared folder
+# 5  W2G1 Day 1    Year 1  2017-08-16 38  # Matches CSV filename in JAC shared folder
+# 6  W2G1 Day 2    Year 1  2017-08-17 32  # Matches CSV filename in JAC shared folder
+# 7  W2G2 Day 1    Year 1  2017-09-27 31  # Matches CSV filename in JAC shared folder
+# 8  W2G2 Day 2    Year 1  2017-09-28 37  # Matches CSV filename in JAC shared folder
+# 9  W3G1 Day 1    Year 1  2017-12-18 36  # Matches CSV filename in JAC shared folder
+# 10 W3G1 Day 2    Year 1  2017-12-19 36  # Matches CSV filename in JAC shared folder
+# 11 W3G2 Day 1    Year 1  2018-01-16 35  # Off by +1 day (should be 2018-01-15)
+# 12 W3G2 Day 2    Year 1  2018-01-17 40  # Off by +1 day (should be 2018-01-16)
+# 13 W4G1 Day 1    Year 1  2018-04-16 37  # Matches CSV filename in JAC shared folder
+# 14 W4G1 Day 2    Year 1  2018-04-17 39  # Matches CSV filename in JAC shared folder
+# 15 W4G2 Day 1    Year 1  2018-05-23 33  # Matches CSV filename in JAC shared folder
+# 16 W4G2 Day 2    Year 1  2018-05-24 33  # Matches CSV filename in JAC shared folder
+# 17 W5G1 Day 1    Year 1  2018-09-04 35  # Matches CSV filename in JAC shared folder
+# 18 W5G1 Day 2    Year 1  2018-09-05 37  # Matches CSV filename in JAC shared folder
+# 19 W5G2 Day 1    Year 1  2018-09-24 28  # Matches CSV filename in JAC shared folder
+# 20 W5G2 Day 2    Year 1  2018-09-25 37  # Matches CSV filename in JAC shared folder
+
+# 21 W1G1 Day 1    Year 2  2018-03-28 18  # Matches CSV filename in JAC shared folder
+# 22 W1G1 Day 2    Year 2  2018-03-28 15  # Matches CSV filename in JAC shared folder
+# 23 W1G2 Day 1    Year 2  2018-04-30 16  # Matches CSV filename in JAC shared folder
+# 24 W1G2 Day 2    Year 2  2018-05-01 28  # Matches CSV filename in JAC shared folder
+# 25 W2G1 Day 1    Year 2  2018-08-14 16  # Matches CSV filename in JAC shared folder
+# 26 W2G1 Day 2    Year 2  2018-08-15 13  # Matches CSV filename in JAC shared folder
+# 27 W2G2 Day 1    Year 2  2018-09-26 18  # Matches CSV filename in JAC shared folder
+# 28 W2G2 Day 2    Year 2  2018-09-26 24  # Matches CSV filename in JAC shared folder
+# 29 W3G1 Day 1    Year 2  2018-12-17 16  # Matches CSV filename in JAC shared folder
+# 30 W3G1 Day 2    Year 2  2018-12-17 17  # Matches CSV filename in JAC shared folder
+# 31 W3G2 Day 1    Year 2  2019-01-08 16  # Matches CSV filename in JAC shared folder
+# 32 W3G2 Day 2    Year 2  2019-01-08 28  # Matches CSV filename in JAC shared folder
+# 33 W4G1 Day 1    Year 2  2019-04-16 15  # Matches CSV filename in JAC shared folder
+# 34 W4G1 Day 2    Year 2  2019-04-16 16  # Matches CSV filename in JAC shared folder
+# 35 W4G2 Day 1    Year 2  2019-05-21 16  # Matches CSV filename in JAC shared folder
+# 36 W4G2 Day 2    Year 2  2019-05-21 22  # Matches CSV filename in JAC shared folder
+# 37 W5G1 Day 1    Year 2  2019-08-19 15  # Matches CSV filename in JAC shared folder
+# 38 W5G1 Day 2    Year 2  2019-08-20 17  # Matches CSV filename in JAC shared folder
+# 39 W5G2 Day 1    Year 2  2019-10-01 15  # Matches CSV filename in JAC shared folder
+# 40 W5G2 Day 2    Year 2  2019-10-02 24  # Matches CSV filename in JAC shared folder
+
+# 41 W1G2 Day 2    Year 3  2019-05-06  1  # The collection date is correct, this mouse (OR13067-5807) was tested with the 35 month timepoint of the G23W1 DO mice in the longitudinal DO diet project with Calico  
+# 42 W2G2 Day 2    Year 3  2019-10-01  1  # The collection date is correct, this mouse (OR13067-5821) was tested with the W5G2 Day 1 mice
+
+
+REVISED_DATA <- REVISED_DATA %>% 
+  mutate(
+    Shift = ifelse(
+      DateCollect %in% as.Date(c('2018-01-16', '2018-01-17'), '%Y-%m-%d'),
+      -1, 0
+    ),
+    DateCollect = DateCollect + days(Shift)
+  ) %>% 
+  select(-c(
+    Shift
+  )) %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(
+        MouseID, DOB
+      ),
+    by = 'MouseID'
+  ) %>% 
+  mutate(
+    AgeInDays = as.numeric(difftime(DateCollect, DOB, units = 'days')),
+    Timepoint = ifelse(
+      AgeInDays/30.4 <= 13, 'Year 1',
+      ifelse(
+        AgeInDays/30.4 <= 25, 'Year 2',
+        ifelse(
+          AgeInDays/30.4 < 37, 'Year 3',
+          'ERROR!'
+        )
+      )
+    )
+  ) %>% 
+  select(-c(
+    DOB
+  )) %>% 
+  select(
+    OutputRowID:MouseID,
+    Timepoint, AgeInDays,
+    everything()
+  )
+
+REVISED_DATA %>% 
+  group_by(Timepoint) %>% 
+  summarise(
+    Mean = mean(AgeInDays/30.4),
+    Median = median(AgeInDays/30.4),
+    Min = min(AgeInDays/30.4),
+    Max = max(AgeInDays/30.4)
+  ) %>% 
+  data.frame()
+#   Timepoint     Mean   Median       Min      Max
+# 1    Year 1 11.37490 11.41447  9.210526 12.13816
+# 2    Year 2 23.30804 23.35526 21.414474 24.21053
+# 3    Year 3 34.70395 34.70395 33.585526 35.82237
+
+#####
+
+
+################################################################################
+# Create days since fast column ####
+
+# The 2-day fasting mice both have their food hoppers removed at noon on 
+# Wednesday and returned at noon on Friday. Phenotyping generally happens in 
+# the morning. Thus, if a IF mouse is phenotyped on a Wednesday it is not 
+# in the fasting period, but if it is phenotyped on a Thursday or Friday it is.
+# Thus, the "days since fast" for the IF mice for Monday through Saturday will
+# be:
+#   Monday  Tuesday  Wednesday  Thursday  Friday  Saturday  Sunday
+#   3       4        5          0         0       1         2
+# The days since fast for the ad libitum mice will be "NA", as will the days
+# since fast for any measurements recorded before 6 months when the diet
+# intervention started
+
+
+REVISED_DATA$DateCollect %>% weekdays() %>% tab()
+# Monday  Thursday   Tuesday Wednesday 
+#    268       102       450       251 
+
+WEEKDAYS <- c(
+  'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+)
+IF2D <- c(
+  3, 4, 5, 0, 0, 1, 2
+)
+names(IF2D) <- WEEKDAYS
+
+REVISED_DATA <- REVISED_DATA %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(
+        MouseID, Diet
+      ),
+    by = 'MouseID'
+  ) %>% 
+  mutate(
+    DaysSinceFast = ifelse(
+      Diet == 'AL' | AgeInDays < 6*30.4, NA,
+      ifelse(
+        Diet == 'IF', IF2D[weekdays(DateCollect)],
+        -999
+      )
+    )
+  ) %>% 
+  select(-c(
+    Diet
+  )) %>% 
+  select(
+    OutputRowID:DateCollect, 
+    DaysSinceFast,
+    everything()
+  )
+
+REVISED_DATA %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(MouseID, Diet),
+    by = 'MouseID'
+  ) %>% 
+  select(Diet, DaysSinceFast) %>% 
+  tab()
+#     DaysSinceFast
+# Diet   0   3   4   5 <NA>
+#   AL   0   0   0   0  518
+#   IF  51 138 233 131    0
+
+rm(WEEKDAYS, IF2D)
+
+#####
+
+
+################################################################################
 # Get weekly bodyweights ####
 
 REVISED_DATA <- REVISED_DATA %>% 
@@ -678,31 +1037,472 @@ ANIMAL_DATA %>%
 
 
 ################################################################################
-# Swaps ####
+# Visualizeing swaps ####
+
+REVISED_DATA %>% 
+  select(
+    BW_Test, BW_Weekly
+  ) %>% 
+  summary()
+#      BW_Test        BW_Weekly    
+# Min.   :15.19   Min.   :15.29  
+# 1st Qu.:25.43   1st Qu.:23.99  
+# Median :29.16   Median :27.89  
+# Mean   :30.24   Mean   :29.15  
+# 3rd Qu.:33.60   3rd Qu.:32.75  
+# Max.   :53.75   Max.   :53.62  
+# NA's   :1       NA's   :1    
+
+DATA <- ANIMAL_DATA %>% 
+  select(
+    MouseID, JobGroup, HID
+  ) %>% 
+  right_join(
+    REVISED_DATA %>% 
+      select(
+        MouseID, Timepoint, DateCollect, BW_Weekly, BW_Test
+      ),
+    by = 'MouseID'
+  )
+
+for(TP in sort(unique(DATA$Timepoint))){
+  YEAR_DATA <- DATA %>% 
+    filter(
+      Timepoint == TP
+    )
+  pdf(
+    paste0(
+      'figures/bw_sample_swap_plots/',
+      str_replace(TP, ' ', ''),
+      '_',
+      'bw_comparison_plots',
+      '.pdf'
+    ),
+    width = 6.5, height = 6.0
+  )
+  
+  for(JG in sort(unique(YEAR_DATA$JobGroup))){
+    JOB_DATA <- YEAR_DATA %>% 
+      filter(
+        JobGroup == JG
+      )
+    for(DATE in sort(unique(as.character(JOB_DATA$DateCollect)))){
+      DATE_DATA <- JOB_DATA %>% 
+        filter(
+          DateCollect == DATE
+        ) %>% 
+        mutate(
+          HID = as.character(HID)
+        )
+      
+      PLOT <- DATE_DATA %>% 
+        ggplot() +
+        theme_minimal() +
+        geom_abline(
+          slope = 1, intercept = 0,
+          linetype = 3,
+          color = 'gray50'
+        ) +
+        geom_point(
+          aes(x = BW_Weekly, y = BW_Test, color = HID)
+        ) +
+        scale_color_manual(
+          values = COLORS
+        ) +
+        scale_x_continuous(
+          limits = c(15, 56),
+          breaks = seq(0, 100, 6),
+          minor_breaks = seq(0, 100, 2)
+        ) +
+        scale_y_continuous(
+          limits = c(15, 56),
+          breaks = seq(0, 100, 6),
+          minor_breaks = seq(0, 100, 2)
+        ) +
+        labs(
+          title = paste0(
+            JG, ': ', DATE
+          ),
+          x = 'Weekly bodyweight (grams)',
+          y = 'Bodyweight from CBC assay (grams)'
+        )
+      
+      plot(PLOT)
+      
+      rm(DATE_DATA, PLOT)
+    }
+    rm(JOB_DATA, DATE)
+  }
+  
+  dev.off()
+  
+  rm(YEAR_DATA, JG)
+}
+rm(TP)
+
+rm(DATA)
+
+#####
+
+
+################################################################################
+## Fixing swaps in year 1 data ###########################################
+
+# Of the two mice that are missing either their test or weekly bodyweight, 
+# neither have any housemates whose test and weekly bodyweights don't match.
+ANIMAL_DATA %>% 
+  select(MouseID, JobGroup, HID) %>% 
+  right_join(
+    REVISED_DATA %>% 
+      filter(
+        is.na(BW_Test) | is.na(BW_Weekly)
+      ) %>% 
+      select(MouseID, Timepoint, DateCollect, BW_Weekly, BW_Test)
+  ) %>% 
+  arrange(JobGroup) %>% 
+  data.frame()
+#        MouseID   JobGroup  HID Timepoint DateCollect BW_Weekly BW_Test
+# 1  OR3609-5926 W2G2 Day 2 5130    Year 1  2017-09-28        NA   35.16
+# 2 IL16188-5064 W5G1 Day 2 6409    Year 1  2018-09-05  33.52183      NA
+
+REVISED_DATA %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(
+        MouseID, HID, EarNotch, Coat, DOE
+      )
+  ) %>% 
+  filter(
+    DateCollect == '2017-09-28',
+    HID == 5129
+  ) %>% 
+  select(
+    OutputRowID, MouseID, HID, EarNotch, Coat, BW_Test, BW_Weekly
+  ) %>% 
+  arrange(
+    MouseID
+  ) %>% 
+  data.frame()
+#   OutputRowID     MouseID  HID EarNotch  Coat BW_Test BW_Weekly
+# 1       24774 OR3609-5916 5129        N other   30.80  30.13129
+# 2       24776 OR3609-5917 5129        R other   27.90  18.30995 # Swap
+# 3       24777 OR3609-5918 5129        L other   18.67  27.60307 # Swap
+# 4       24778 OR3609-5919 5129        B other   26.93  25.55500
+
+
+REVISED_DATA %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(
+        MouseID, HID, EarNotch, Coat, DOE
+      )
+  ) %>% 
+  filter(
+    DateCollect == '2018-09-24',
+    HID == 6499
+  ) %>% 
+  select(
+    OutputRowID, MouseID, HID, EarNotch, Coat, BW_Test, BW_Weekly
+  ) %>% 
+  arrange(
+    MouseID
+  ) %>% 
+  data.frame()
+#   OutputRowID      MouseID  HID EarNotch Coat BW_Test BW_Weekly
+# 1      693483 IL16750-5777 6499        R <NA>   23.59  33.20347 # Swap
+# 2      693484 IL16750-5778 6499        L <NA>   33.77  23.50459 # Swap
+# 3      693485 IL16750-5779 6499        B <NA>   20.78  26.53676
+
+REVISED_DATA %>% 
+  filter(
+    OutputRowID %in% c(24776, 24777, 693483, 693484)
+  ) %>% 
+  write_csv(
+    'issues/sample_swaps.csv'
+  )
+
+REVISED_DATA$MouseID[REVISED_DATA$OutputRowID == '24776'] <- 'OR3609-5918'
+REVISED_DATA$MouseID[REVISED_DATA$OutputRowID == '24777'] <- 'OR3609-5917'
+REVISED_DATA$MouseID[REVISED_DATA$OutputRowID == '693483'] <- 'IL16750-5778'
+REVISED_DATA$MouseID[REVISED_DATA$OutputRowID == '693484'] <- 'IL16750-5777'
+
+#####
+
+
+################################################################################
+## Fixing swaps in year 2 data ###########################################
+
+# No swaps identified
 
 
 #####
 
 
 ################################################################################
+## Fixing swaps in year 3 data ###########################################
+
+# No swaps identified
+
+
+#####
+
+
+################################################################################
+## Re-do ages, timepoints, and weekly bodyweights after fixing swaps ##########
+
+REVISED_DATA <- REVISED_DATA %>% 
+  left_join(
+    ANIMAL_DATA %>% 
+      select(
+        MouseID, DOB
+      ),
+    by = 'MouseID'
+  ) %>% 
+  mutate(
+    AgeInDays = as.numeric(difftime(DateCollect, DOB, units = 'days')),
+    Timepoint = ifelse(
+      AgeInDays/30.4 <= 13, 'Year 1',
+      ifelse(
+        AgeInDays/30.4 <= 25, 'Year 2',
+        ifelse(
+          AgeInDays/30.4 < 37, 'Year 3',
+          'ERROR!'
+        )
+      )
+    )
+  ) %>% 
+  select(-c(
+    DOB
+  )) %>% 
+  select(
+    OutputRowID:MouseID,
+    Timepoint, AgeInDays,
+    everything()
+  )
+
+REVISED_DATA <- REVISED_DATA %>% 
+  mutate(BW_Weekly = get_bw(MouseID, DateCollect)) %>% 
+  select(OutputRowID:BW_Test, BW_Weekly, everything())
+# No preceeding weekly BWs within 1 month of 2018-04-17 assay for IL16188-5056  # This mouse has a gap of missing (not lost due to cleaning, they are missing in the uncleaned weekly BW data) weekly bodyweights from mid february 2018 through mid may 2018, but it doesn't look like there was much of a change in BW during that time
+# No following weekly BWs within 1 month of 2018-08-14 assay for IL16513-5324   # Mouse died shortly after CBC assay (actually, its death date matches the CBC date)
+# No following weekly BWs within 1 month of 2018-09-24 assay for IL16750-5771   # Mouse died shortly after CBC assay
+# No weekly BWs within 1 month of 2017-09-28 assay for OR3609-5926              # This mouse is missing (not lost due to cleaning, they are missing in the uncleaned weekly BW data) all of its weekly bodyweights before february 2018
+# No following weekly BWs within 1 month of 2018-05-24 assay for OR3609-5952    # Mouse died shortly after CBC assay
+
+
+# Check that swaps are fixed:
+
+DATA <- ANIMAL_DATA %>% 
+  select(
+    MouseID, JobGroup, HID
+  ) %>% 
+  right_join(
+    REVISED_DATA %>% 
+      select(
+        MouseID, Timepoint, DateCollect, BW_Weekly, BW_Test
+      ),
+    by = 'MouseID'
+  )
+
+for(TP in sort(unique(DATA$Timepoint))){
+  YEAR_DATA <- DATA %>% 
+    filter(
+      Timepoint == TP
+    )
+  pdf(
+    paste0(
+      'figures/bw_sample_swap_plots/',
+      str_replace(TP, ' ', ''),
+      '_',
+      'bw_comparison_plots',
+      '_fixed.pdf'
+    ),
+    width = 6.5, height = 6.0
+  )
+  
+  for(JG in sort(unique(YEAR_DATA$JobGroup))){
+    JOB_DATA <- YEAR_DATA %>% 
+      filter(
+        JobGroup == JG
+      )
+    for(DATE in sort(unique(as.character(JOB_DATA$DateCollect)))){
+      DATE_DATA <- JOB_DATA %>% 
+        filter(
+          DateCollect == DATE
+        ) %>% 
+        mutate(
+          HID = as.character(HID)
+        )
+      
+      PLOT <- DATE_DATA %>% 
+        ggplot() +
+        theme_minimal() +
+        geom_abline(
+          slope = 1, intercept = 0,
+          linetype = 3,
+          color = 'gray50'
+        ) +
+        geom_point(
+          aes(x = BW_Weekly, y = BW_Test, color = HID)
+        ) +
+        scale_color_manual(
+          values = COLORS
+        ) +
+        scale_x_continuous(
+          limits = c(15, 56),
+          breaks = seq(0, 100, 6),
+          minor_breaks = seq(0, 100, 2)
+        ) +
+        scale_y_continuous(
+          limits = c(15, 56),
+          breaks = seq(0, 100, 6),
+          minor_breaks = seq(0, 100, 2)
+        ) +
+        labs(
+          title = paste0(
+            JG, ': ', DATE
+          ),
+          x = 'Weekly bodyweight (grams)',
+          y = 'Bodyweight from CBC assay (grams)'
+        )
+      
+      plot(PLOT)
+      
+      rm(DATE_DATA, PLOT)
+    }
+    rm(JOB_DATA, DATE)
+  }
+  
+  dev.off()
+  
+  rm(YEAR_DATA, JG)
+}
+rm(TP)
+
+rm(DATA)
+
+
+#####
+
+
+################################################################################
+##### Plot histograms of phenotypes #####
+
+PHENOTYPES <- names(REVISED_DATA)[16:48]
+
+pdf(
+  'figures/histograms_of_phenotypes_and_transformations.pdf',
+  width = 7, height = 4 + (length(PHENOTYPES) - 1)*1.5
+)
+par(
+  mfrow = c(length(PHENOTYPES), 2)
+)
+for(PHENO in PHENOTYPES){
+  X <- REVISED_DATA[[PHENO]]
+  XTF <- REVISED_DATA[[PHENO]]
+  
+  TRANSFORM <- 'none'
+  if(tolower(substr(PHENO, 1, 4)) == 'perc'){
+    TRANSFORM <- 'logit'
+    XTF <- logit_of_perc(XTF)
+  } else if(skewness(X, na.rm = TRUE) > 1){
+    TRANSFORM <- 'log'
+    XTF <- log_tf(XTF)
+  }
+  
+  hist(
+    X,
+    main = paste0(
+      PHENO, 
+      ', skewness = ', 
+      signif(skewness(X, na.rm = TRUE), 3), 
+      ', kurtosis = ', 
+      signif(skewness(X, na.rm = TRUE), 3)
+    ),
+    xlab = NULL,
+    breaks = 100
+  )
+  
+  
+  
+  hist(
+    XTF,
+    main = paste0(
+      PHENO, ', ', 
+      ifelse(
+        TRANSFORM == 'none', 'no transform',
+        paste0(TRANSFORM, ' transform')
+      )
+    ),
+    xlab = NULL,
+    breaks = 100
+  )
+  
+  rm(X, XTF, TRANSFORM)
+}
+dev.off()
+
+rm(PHENO, PHENOTYPES)
+
+#####
+
+
+################################################################################
+## calculate derived measures ###########################################
+
+REVISED_DATA <- REVISED_DATA %>% 
+  mutate(
+    NumRetic = NumRetic/1000,                   # Convert NumRetic (10^3 cells / uL) to the same units as RBC (10^6 cells / uL)
+    RDWsd = MCV*RDWcv/100,
+    HDWcv = HDWsd/CHCM*100,
+    NLR = NumNeut/NumLymph,
+    PDWsd = MPV*PDWcv/100
+  ) %>% 
+  select(
+    OutputRowID:Anesthesia,
+    NumClumps,
+    NumRBC, NumRetic, PercRetic, Hct, Hgb, CalcHgb, 
+    MCV, CHCM, MCHC, CH, MCH, CHm, CHr, RDWcv, RDWsd, HDWcv, HDWsd,
+    NumWBC, NumLymph, NumNeut, NumMono, NumEos, NumBaso, NumLUC,
+    NLR, PercLymph, PercNeut, PercMono, PercEos, PercBaso, PercLUC,
+    NumPlt, MPV, MPM, PDWcv, PDWsd, 
+    everything()
+  )
+
+#####
+
+
+
+################################################################################
 # Save data ####
 
-reerq %>% 
+REVISED_DATA %>% 
+  select(-c(TaskID, HID_Test, Coat_Test, EN_Test
+  )) %>% 
+  select(
+    MouseID, OutputRowID,
+    everything(),
+  ) %>% 
+  arrange(
+    substr(MouseID, nchar(MouseID) - 3, 999),
+    DateCollect
+  ) %>% 
   write_csv('data/Cleaned_CBC_20210719.csv')
-# # A tibble: 66,904 x 11
-#    MouseID      OutputRowID BWDay_Test Tech  BatchComments DateDue    DateCollect DateComplete AgeInDays    BW BW_LOESS
-#    <chr>              <int> <chr>      <chr> <chr>         <date>     <date>      <date>           <dbl> <dbl>    <dbl>
-#  1 IL16188-5000     1349288 Thursday   NA    NA            2016-06-02 2016-06-02  NA                  39  21.3     20.8
-#  2 IL16188-5000     1349289 Thursday   NA    NA            2016-06-09 2016-06-09  NA                  46  21.4     21.7
-#  3 IL16188-5000     1349290 Thursday   NA    NA            2016-06-16 2016-06-16  NA                  53  22.2     22.6
-#  4 IL16188-5000     1349291 Thursday   NA    NA            2016-06-23 2016-06-23  NA                  60  22.4     23.5
-#  5 IL16188-5000     1349292 Thursday   NA    NA            2016-06-30 2016-06-30  NA                  67  24.1     24.3
-#  6 IL16188-5000     1349293 Thursday   NA    NA            2016-07-07 2016-07-07  NA                  74  24.6     25.1
-#  7 IL16188-5000     1349294 Thursday   NA    NA            2016-07-14 2016-07-14  NA                  81  26.8     25.9
-#  8 IL16188-5000     1349295 Thursday   NA    NA            2016-07-21 2016-07-21  NA                  88  28.2     26.7
-#  9 IL16188-5000     1349296 Thursday   NA    NA            2016-07-28 2016-07-28  NA                  95  28.9     27.5
-# 10 IL16188-5000     1349297 Thursday   NA    NA            2016-08-04 2016-08-04  NA                 102  27.8     28.2
-# # … with 66,894 more rows
+# # A tibble: 1,071 x 48
+#    MouseID OutputRowID Timepoint AgeInDays DateCollect DaysSinceFast Tech  Comments BW_Test BW_Weekly Anesthesia NumClumps NumRBC NumRetic PercRetic   Hct   Hgb CalcHgb   MCV  CHCM  MCHC    CH   MCH   CHm   CHr RDWcv RDWsd HDWcv HDWsd NumWBC NumLymph NumNeut
+#    <chr>         <int> <chr>         <dbl> <date>              <dbl> <chr> <chr>      <dbl>     <dbl> <chr>          <dbl>  <dbl>    <dbl>     <dbl> <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl> <dbl>  <dbl>    <dbl>   <dbl>
+#  1 IL1618…     1252746 Year 1          338 2017-03-28             NA John  Batch c…    40.0      40.0 proparaca…      1241   9.31    0.404      4.34  44.9  14.9    13.7  48.3  30.5  33    14.7  16    NA    16.4  14.6  7.05  6.75  2.06   3.15     1.9     0.62
+#  2 IL1618…     1251082 Year 2          703 2018-03-28             NA Rach… Batch c…    44.4      42.0 proparaca…        60   4.3     0.861     20.0   26.7   8.1     7.6  62.1  28.3  30.1  17.5  18.7  17.9  18.1  19.7 12.2   9.89  2.8   12.6      2.88    8.97
+#  3 IL1618…     1252747 Year 1          338 2017-03-28             NA John  Batch c…    31.5      30.4 proparaca…      1516   9.77    0.481      4.92  46.6  15.3    14    47.7  30.1  32.9  14.3  15.7  NA    16.4  15.2  7.25  6.78  2.04   3.72     1.87    0.86
+#  4 IL1618…     1252748 Year 1          338 2017-03-28             NA John  Batch c…    26.7      28.3 proparaca…       419   9.91    0.379      3.83  47.6  15.5    14.2  48    29.9  32.6  14.3  15.7  NA    16.1  14    6.72  6.66  1.99   1.67     1.02    0.41
+#  5 IL1618…     1251083 Year 2          703 2018-03-28             NA Rach… Batch c…    32.2      32.2 proparaca…        88   7.91    0.461      5.82  39.4  12.3    11.8  49.8  29.8  31.1  14.8  15.5  15.2  17.4  19.5  9.71  7.82  2.33   8.72     1.65    6.54
+#  6 IL1618…     1252749 Year 1          337 2017-03-28             NA John  Batch c…    43.5      45.9 proparaca…      1289  10.2     0.177      1.73  48.7  16.1    14.8  47.6  30.3  32.9  14.4  15.7  NA    15.5  13.8  6.57  6.57  1.99   2.26     0.8     0.63
+#  7 IL1618…     1252750 Year 1          337 2017-03-28              4 John  Batch c…    24.3      24.4 proparaca…      1045   8.98    0.555      6.18  44.6  14.4    13.6  49.7  30.4  32.2  15    16    NA    16.5  17.5  8.70  7.37  2.24   3.53     2.03    0.97
+#  8 IL1618…     1252751 Year 1          337 2017-03-28              4 John  Batch c…    23.4      21.6 proparaca…       608   9.54    0.359      3.77  45.8  15.1    14    48    30.5  32.9  14.6  15.8  NA    17.4  16.2  7.78  6.52  1.99   1.99     0.96    0.57
+#  9 IL1618…     1252752 Year 1          337 2017-03-28              4 John  Batch c…    31.4      29.6 proparaca…      1459   9.57    0.410      4.29  47    15.1    13.7  49.2  29.2  32.1  14.3  15.8  NA    17.1  16.4  8.07  6.68  1.95   2.04     1.04    0.52
+# 10 IL1618…     1251084 Year 2          702 2018-03-28              5 Rach… Batch c…    30.0      28.6 proparaca…      1809   9.26    0.278      3     43    14.4    12.9  46.4  30    33.6  13.9  15.6  14.3  15.8  12.9  5.99  6.23  1.87   2.37     0.54    0.89
+# # … with 1,061 more rows, and 16 more variables: NumMono <dbl>, NumEos <dbl>, NumBaso <dbl>, NumLUC <dbl>, NLR <dbl>, PercLymph <dbl>, PercNeut <dbl>, PercMono <dbl>, PercEos <dbl>, PercBaso <dbl>, PercLUC <dbl>, NumPlt <dbl>, MPV <dbl>, MPM <dbl>,
+# #   PDWcv <dbl>, PDWsd <dbl>
 
 #####
 
