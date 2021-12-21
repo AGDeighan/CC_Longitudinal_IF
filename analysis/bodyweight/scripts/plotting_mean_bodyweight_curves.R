@@ -76,6 +76,8 @@ ANIMAL_DATA$Died %>% tab
 # FALSE  TRUE 
 #     1   767 
 
+ANIMAL_DATA <- ANIMAL_DATA %>% 
+  filter(Died)
 
 BW_DATA <- read_csv(
   'data/SpeedCleaned_BW_20210719.csv',
