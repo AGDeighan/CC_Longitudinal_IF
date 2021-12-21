@@ -214,7 +214,7 @@ PLOT <- PLOT_DATA %>%
   )
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_Diet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_Diet.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -291,7 +291,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_Diet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_Diet.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -376,7 +376,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_Sex.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_Sex.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -453,7 +453,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_Sex.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_Sex.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -551,7 +551,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_SexAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_SexAndDiet.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -641,7 +641,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_SexAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_SexAndDiet.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -720,7 +720,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_Strain.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_Strain.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -791,7 +791,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_Strain.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_Strain.pdf',
   width = 7, height = 5
 )
 plot(PLOT)
@@ -882,7 +882,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_StrainAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_StrainAndDiet.pdf',
   width = 12, height = 5
 )
 plot(PLOT)
@@ -965,7 +965,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_StrainAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_StrainAndDiet.pdf',
   width = 12, height = 5
 )
 plot(PLOT)
@@ -1049,7 +1049,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_StrainAndSex.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_StrainAndSex.pdf',
   width = 12, height = 5
 )
 plot(PLOT)
@@ -1125,7 +1125,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_StrainAndSex.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_StrainAndSex.pdf',
   width = 12, height = 5
 )
 plot(PLOT)
@@ -1215,7 +1215,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyAge_Summary_StrainAndSexAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyAge_Summary_StrainAndSexAndDiet.pdf',
   width = 12, height = 8
 )
 plot(PLOT)
@@ -1297,7 +1297,7 @@ PLOT <- PLOT_DATA %>%
   ); PLOT
 
 pdf(
-  'analysis/bodyweight/figures/BWbyPLL_Summary_StrainAndSexAndDiet.pdf',
+  'analysis/bodyweight/figures/summary_curves_mean_se/BWbyPLL_Summary_StrainAndSexAndDiet.pdf',
   width = 13, height = 8
 )
 plot(PLOT)
