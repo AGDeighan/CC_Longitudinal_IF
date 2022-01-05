@@ -43,6 +43,9 @@ vignettes/*.pdf
 *data/
 *issues/
 
+*Untitled*
+*untitled*
+
 # Mac directory files
 *DS_Store*
 
