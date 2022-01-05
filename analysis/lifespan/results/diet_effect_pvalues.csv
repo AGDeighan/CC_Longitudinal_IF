@@ -1,0 +1,103 @@
+Test,TestFactor,CovariateFactors,Strain,Sex,PValue
+Mean lifespan (lmer),Diet,Strain and Sex,All,All,0.0022639480584273
+Mean lifespan (lmer),Diet,Strain,All,Female,0.5215363614408856
+Mean lifespan (lmer),Diet,Strain,All,Male,1.9418523559746996e-4
+Mean lifespan (lm),Diet,Strain and Sex,All,All,0.002240583009414002
+Mean lifespan (lm),Diet,Strain,All,Female,0.5180849477857525
+Mean lifespan (lm),Diet,Strain,All,Male,1.89722715999769e-4
+Median lifespan,Diet,Strain and Sex,All,All,0.007532177119723497
+Median lifespan,Diet,Strain,All,Female,0.6117219679423401
+Median lifespan,Diet,Strain,All,Male,0.0014343083195065527
+Maximum lifespan,Diet,Strain and Sex,All,All,0.012771611753323343
+Maximum lifespan,Diet,Strain,All,Female,0.6169369737222359
+Maximum lifespan,Diet,Strain,All,Male,0.004052486454083829
+Mean lifespan (lm),Diet,Sex,CC003/UncJ,All,0.8088247196727979
+Mean lifespan (lm),Diet,NA,CC003/UncJ,Female,0.7541369446824522
+Mean lifespan (lm),Diet,NA,CC003/UncJ,Male,0.9915403639125593
+Median lifespan,Diet,Sex,CC003/UncJ,All,0.04079605371296721
+Median lifespan,Diet,NA,CC003/UncJ,Female,0.008555733229525362
+Median lifespan,Diet,NA,CC003/UncJ,Male,1.0000000000000002
+Maximum lifespan,Diet,Sex,CC003/UncJ,All,0.7114658060442355
+Maximum lifespan,Diet,NA,CC003/UncJ,Female,1
+Maximum lifespan,Diet,NA,CC003/UncJ,Male,0.604989604989605
+Mean lifespan (lm),Diet,Sex,CC004/TauUncJ,All,0.05306334405907596
+Mean lifespan (lm),Diet,NA,CC004/TauUncJ,Female,0.9670248444770445
+Mean lifespan (lm),Diet,NA,CC004/TauUncJ,Male,0.009723814262549806
+Median lifespan,Diet,Sex,CC004/TauUncJ,All,0.25726422447361774
+Median lifespan,Diet,NA,CC004/TauUncJ,Female,0.752371134563909
+Median lifespan,Diet,NA,CC004/TauUncJ,Male,0.02170979977238146
+Maximum lifespan,Diet,Sex,CC004/TauUncJ,All,0.14894965475710215
+Maximum lifespan,Diet,NA,CC004/TauUncJ,Female,0.6049896049896049
+Maximum lifespan,Diet,NA,CC004/TauUncJ,Male,0.32818532818532814
+Mean lifespan (lm),Diet,Sex,CC005/TauUncJ,All,0.4848915103469531
+Mean lifespan (lm),Diet,NA,CC005/TauUncJ,Female,0.3385825130569754
+Mean lifespan (lm),Diet,NA,CC005/TauUncJ,Male,0.06582012795284384
+Median lifespan,Diet,Sex,CC005/TauUncJ,All,0.8209861754320822
+Median lifespan,Diet,NA,CC005/TauUncJ,Female,0.5171237123996232
+Median lifespan,Diet,NA,CC005/TauUncJ,Male,0.20492715519073326
+Maximum lifespan,Diet,Sex,CC005/TauUncJ,All,0.7114658060442355
+Maximum lifespan,Diet,NA,CC005/TauUncJ,Female,0.6038610038610037
+Maximum lifespan,Diet,NA,CC005/TauUncJ,Male,0.1060291060291061
+Mean lifespan (lm),Diet,Sex,CC006/TauUncJ,All,0.1465967017640019
+Mean lifespan (lm),Diet,NA,CC006/TauUncJ,Female,0.42241683818022446
+Mean lifespan (lm),Diet,NA,CC006/TauUncJ,Male,0.22462785752665146
+Median lifespan,Diet,Sex,CC006/TauUncJ,All,0.25057344822259814
+Median lifespan,Diet,NA,CC006/TauUncJ,Female,0.527253984167463
+Median lifespan,Diet,NA,CC006/TauUncJ,Male,0.5050852453957354
+Maximum lifespan,Diet,Sex,CC006/TauUncJ,All,0.7128220184717597
+Maximum lifespan,Diet,NA,CC006/TauUncJ,Female,1
+Maximum lifespan,Diet,NA,CC006/TauUncJ,Male,0.6051948051948051
+Mean lifespan (lm),Diet,Sex,CC018/UncJ,All,0.05165729451476722
+Mean lifespan (lm),Diet,NA,CC018/UncJ,Female,0.32520453155579776
+Mean lifespan (lm),Diet,NA,CC018/UncJ,Male,0.0699778492315022
+Median lifespan,Diet,Sex,CC018/UncJ,All,0.0211240907084224
+Median lifespan,Diet,NA,CC018/UncJ,Female,0.056160926432242485
+Median lifespan,Diet,NA,CC018/UncJ,Male,0.1938759496258167
+Maximum lifespan,Diet,Sex,CC018/UncJ,All,0.71103691835348
+Maximum lifespan,Diet,NA,CC018/UncJ,Female,1
+Maximum lifespan,Diet,NA,CC018/UncJ,Male,0.3397683397683398
+Mean lifespan (lm),Diet,Sex,CC019/TauUncJ,All,0.4692201104615097
+Mean lifespan (lm),Diet,NA,CC019/TauUncJ,Female,0.2767202822939646
+Mean lifespan (lm),Diet,NA,CC019/TauUncJ,Male,0.898873206509113
+Median lifespan,Diet,Sex,CC019/TauUncJ,All,0.823252173211423
+Median lifespan,Diet,NA,CC019/TauUncJ,Female,0.752371134563909
+Median lifespan,Diet,NA,CC019/TauUncJ,Male,0.9999999999999999
+Maximum lifespan,Diet,Sex,CC019/TauUncJ,All,1
+Maximum lifespan,Diet,NA,CC019/TauUncJ,Female,1
+Maximum lifespan,Diet,NA,CC019/TauUncJ,Male,1
+Mean lifespan (lm),Diet,Sex,CC032/GeniUncJ,All,0.0567446639899367
+Mean lifespan (lm),Diet,NA,CC032/GeniUncJ,Female,0.43562161980612624
+Mean lifespan (lm),Diet,NA,CC032/GeniUncJ,Male,0.05538086591927633
+Median lifespan,Diet,Sex,CC032/GeniUncJ,All,0.06937825878427639
+Median lifespan,Diet,NA,CC032/GeniUncJ,Female,0.34306722475218854
+Median lifespan,Diet,NA,CC032/GeniUncJ,Male,0.1938759496258167
+Maximum lifespan,Diet,Sex,CC032/GeniUncJ,All,0.4806384508796239
+Maximum lifespan,Diet,NA,CC032/GeniUncJ,Female,0.6049896049896049
+Maximum lifespan,Diet,NA,CC032/GeniUncJ,Male,1
+Mean lifespan (lm),Diet,Sex,CC040/TauUncJ,All,0.024937931990866666
+Mean lifespan (lm),Diet,NA,CC040/TauUncJ,Female,0.9834890527853402
+Mean lifespan (lm),Diet,NA,CC040/TauUncJ,Male,2.0325455363214728e-4
+Median lifespan,Diet,Sex,CC040/TauUncJ,All,0.11225156639124026
+Median lifespan,Diet,NA,CC040/TauUncJ,Female,1.0000000000000002
+Median lifespan,Diet,NA,CC040/TauUncJ,Male,0.05021027728190279
+Maximum lifespan,Diet,Sex,CC040/TauUncJ,All,0.2626348376686018
+Maximum lifespan,Diet,NA,CC040/TauUncJ,Female,1
+Maximum lifespan,Diet,NA,CC040/TauUncJ,Male,0.10501930501930501
+Mean lifespan (lm),Diet,Sex,CC041/TauUncJ,All,0.17653930109388716
+Mean lifespan (lm),Diet,NA,CC041/TauUncJ,Female,0.43350058905332634
+Mean lifespan (lm),Diet,NA,CC041/TauUncJ,Male,0.2727102538955391
+Median lifespan,Diet,Sex,CC041/TauUncJ,All,0.11225156639124013
+Median lifespan,Diet,NA,CC041/TauUncJ,Female,0.752371134563909
+Median lifespan,Diet,NA,CC041/TauUncJ,Male,0.10313973551387128
+Maximum lifespan,Diet,Sex,CC041/TauUncJ,All,0.05711095130350394
+Maximum lifespan,Diet,NA,CC041/TauUncJ,Female,0.106029106029106
+Maximum lifespan,Diet,NA,CC041/TauUncJ,Male,0.6061776061776061
+Mean lifespan (lm),Diet,Sex,CC061/GeniUncJ,All,0.4642813702858821
+Mean lifespan (lm),Diet,NA,CC061/GeniUncJ,Female,0.9778809266035633
+Mean lifespan (lm),Diet,NA,CC061/GeniUncJ,Male,0.3366807179878968
+Median lifespan,Diet,Sex,CC061/GeniUncJ,All,1
+Median lifespan,Diet,NA,CC061/GeniUncJ,Female,0.5050852453957355
+Median lifespan,Diet,NA,CC061/GeniUncJ,Male,0.5171237123996228
+Maximum lifespan,Diet,Sex,CC061/GeniUncJ,All,0.4727167310088589
+Maximum lifespan,Diet,NA,CC061/GeniUncJ,Female,0.6025974025974027
+Maximum lifespan,Diet,NA,CC061/GeniUncJ,Male,0.04633204633204633
