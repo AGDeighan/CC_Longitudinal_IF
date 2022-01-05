@@ -686,71 +686,14 @@ DIET_TEST_RESULTS <- DIET_TEST_RESULTS %>%
     Sex
   )
 
-DIET_TEST_RESULTS %>% 
-  filter(is.na(CovariateFactors))
 
 ################################################################################
-# Strain effects ####
+#  ####
 
-MED_LS_TEST <- quant_test(
-  response = 'SurvDays',
-  group = 'Strain',
-  covariates = c('Diet', 'Sex'),
-  quant = 0.5,
-  data = ANIMAL_DATA,
-  correct = FALSE
+write_csv(
+  DIET_TEST_RESULTS,
+  'analysis/lifespan/results/diet_effect_pvalues.csv'
 )
-# Pearson's Chi-squared test
-# 
-# data:  DATA$Above and DATA$Group
-# X-squared = 132.65, df = 9, p-value < 2.2e-16
-
-
-MAX_LS_TEST <- quant_test(
-  response = 'SurvDays',
-  group = 'Strain',
-  covariates = c('Diet', 'Sex'),
-  quant = 0.9,
-  data = ANIMAL_DATA,
-  correct = FALSE
-)
-# Pearson's Chi-squared test
-# 
-# data:  DATA$Above and DATA$Group
-# X-squared = 55.571, df = 9, p-value = 9.478e-09
-
-#####
-
-
-################################################################################
-# Sex effects ####
-
-MED_LS_TEST <- quant_test(
-  response = 'SurvDays',
-  group = 'Sex',
-  covariates = c('Strain', 'Diet'),
-  quant = 0.5,
-  data = ANIMAL_DATA,
-  correct = FALSE
-)
-# Pearson's Chi-squared test
-# 
-# data:  DATA$Above and DATA$Group
-# X-squared = 23.718, df = 1, p-value = 1.115e-06
-
-
-MAX_LS_TEST <- quant_test(
-  response = 'SurvDays',
-  group = 'Sex',
-  covariates = c('Strain', 'Diet'),
-  quant = 0.9,
-  data = ANIMAL_DATA,
-  correct = FALSE
-)
-# Pearson's Chi-squared test
-# 
-# data:  DATA$Above and DATA$Group
-# X-squared = 10.34, df = 1, p-value = 0.001301
 
 #####
 
